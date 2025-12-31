@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phase 10 Tracker</title>
+<title>Phase 10 Pro Tracker</title>
 <link rel="apple-touch-icon" href="icon.png">
 <style>
   body { font-family: -apple-system, sans-serif; margin: 15px; background-color: #f0f2f5; color: #1c1e21; padding-bottom: 50px; }
@@ -15,15 +15,13 @@
   .score-total { font-size: 2.2rem; font-weight: 800; text-align: center; margin: 5px 0; }
   .input-group { display: flex; gap: 8px; margin-top: 10px; }
   input[type=text] { flex-grow: 1; padding: 12px; font-size: 1.1rem; border: 2px solid #ddd; border-radius: 10px; text-align: center; }
-  button { padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
+  button { padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
   .btn-phase { background-color: #007AFF; color: white; }
   .btn-add { background-color: #34C759; color: white; width: 100%; margin-top: 10px; font-size: 1.1rem; }
-  .btn-ref { background-color: #8E8E93; color: white; width: 100%; margin-top: 10px; font-size: 0.9rem; }
-  .history-section { margin-top: 20px; background: white; border-radius: 15px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-  th { border-bottom: 2px solid #eee; padding: 8px; color: #888; }
+  .history-section { margin-top: 20px; background: white; border-radius: 15px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 10px; }
+  th { border-bottom: 2px solid #eee; padding: 8px; color: #888; text-align: center; }
   td { padding: 8px; text-align: center; border-bottom: 1px solid #f9f9f9; }
-  #phaseList { display: none; background: #fff; padding: 15px; border-radius: 15px; margin-top: 10px; border: 1px solid #ddd; font-size: 0.85rem; line-height: 1.6; }
   .winner-section { text-align: center; background: #34C759; color: white; padding: 15px; border-radius: 15px; display: none; margin: 20px 0; }
   .btn-reset { background-color: #FF3B30; color: white; width: 100%; margin-top: 40px; font-size: 0.8rem; }
 </style>
@@ -56,34 +54,33 @@
 </div>
 
 <button class="btn-add" onclick="submitRound()">End Round / Add Points</button>
-<button class="btn-ref" onclick="toggleRef()">Show Phase Requirements</button>
-
-<div id="phaseList">
-  <strong>1:</strong> 2 sets of 3 | <strong>2:</strong> 1 set of 3 + 1 run of 4<br>
-  <strong>3:</strong> 1 set of 4 + 1 run of 4 | <strong>4:</strong> 1 run of 7<br>
-  <strong>5:</strong> 1 run of 8 | <strong>6:</strong> 1 run of 9<br>
-  <strong>7:</strong> 2 sets of 4 | <strong>8:</strong> 7 cards of 1 color<br>
-  <strong>9:</strong> 1 set of 5 + 1 set of 2 | <strong>10:</strong> 1 set of 5 + 1 set of 3
-</div>
 
 <div id="winnerBox" class="winner-section">
   <h2 id="winnerText" style="margin:0"></h2>
-  <button onclick="recordWin()" style="margin-top:10px; background: white; color: #34C759; border:none; padding:10px; border-radius:8px; font-weight:bold;">Log Win & Reset Game</button>
+  <button onclick="recordWin()" style="margin-top:10px; background: white; color: #34C759; border:none; padding:12px; border-radius:8px; font-weight:bold; width: 100%;">Save Game to History & Reset</button>
 </div>
 
 <div class="history-section">
-  <h3 style="margin:0 0 10px 0; font-size: 1rem;">Round History</h3>
-  <table>
-    <thead><tr><th>Rd</th><th>Matt</th><th>Emily</th></tr></thead>
-    <tbody id="historyTable"></tbody>
+  <h3 style="margin:0; font-size: 1rem; color: #007AFF;">Master Game History</h3>
+  <table id="masterTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Matt</th>
+        <th>Emily</th>
+        <th>Win</th>
+      </tr>
+    </thead>
+    <tbody id="masterHistoryBody"></tbody>
   </table>
 </div>
 
-<button class="btn-reset" onclick="fullReset()">Reset Everything</button>
+<button class="btn-reset" onclick="fullReset()">Reset All Data</button>
 
 <script>
-let cur = JSON.parse(localStorage.getItem('p10C')) || { mS: 0, eS: 0, mP: 1, eP: 1, r: [] };
+let cur = JSON.parse(localStorage.getItem('p10C')) || { mS: 0, eS: 0, mP: 1, eP: 1 };
 let life = JSON.parse(localStorage.getItem('p10L')) || { mW: 0, eW: 0 };
+let masterHistory = JSON.parse(localStorage.getItem('p10History')) || [];
 
 function update() {
   document.getElementById('totalMatt').textContent = cur.mS;
@@ -92,7 +89,17 @@ function update() {
   document.getElementById('pEmily').textContent = cur.eP;
   document.getElementById('lifeMatt').textContent = life.mW;
   document.getElementById('lifeEmily').textContent = life.eW;
-  document.getElementById('historyTable').innerHTML = cur.r.map((r, i) => `<tr><td>${i+1}</td><td>+${r.m}</td><td>+${r.e}</td></tr>`).reverse().join('');
+
+  // Master History Table
+  const masterBody = document.getElementById('masterHistoryBody');
+  masterBody.innerHTML = masterHistory.map(g => `
+    <tr>
+      <td>${g.date}</td>
+      <td>${g.mS}</td>
+      <td>${g.eS}</td>
+      <td style="font-weight:bold; color:#34C759">${g.w.charAt(0)}</td>
+    </tr>
+  `).reverse().join('');
 
   const winBox = document.getElementById('winnerBox');
   if (cur.mP > 10 || cur.eP > 10) {
@@ -101,21 +108,39 @@ function update() {
     document.getElementById('winnerText').textContent = win + " Wins!";
     window.lastW = win;
   } else { winBox.style.display = 'none'; }
+
   localStorage.setItem('p10C', JSON.stringify(cur));
   localStorage.setItem('p10L', JSON.stringify(life));
+  localStorage.setItem('p10History', JSON.stringify(masterHistory));
 }
 
 function changePhase(p, a) { p==='Matt' ? cur.mP += a : cur.eP += a; update(); }
-function toggleRef() { const d = document.getElementById('phaseList').style; d.display = d.display === 'block' ? 'none' : 'block'; }
+
 function submitRound() {
-  const m = parseInt(document.getElementById('inMatt').value) || 0;
-  const e = parseInt(document.getElementById('inEmily').value) || 0;
-  cur.mS += m; cur.eS += e; cur.r.push({m, e});
+  cur.mS += parseInt(document.getElementById('inMatt').value) || 0;
+  cur.eS += parseInt(document.getElementById('inEmily').value) || 0;
   document.getElementById('inMatt').value = ""; document.getElementById('inEmily').value = "";
   update();
 }
-function recordWin() { window.lastW === "Matt" ? life.mW++ : life.eW++; cur = { mS: 0, eS: 0, mP: 1, eP: 1, r: [] }; update(); }
-function fullReset() { if(confirm("Clear records?")) { life={mW:0,eW:0}; cur={mS:0,eS:0,mP:1,eP:1,r:[]}; update(); } }
+
+function recordWin() {
+  const gameRecord = {
+    date: new Date().toLocaleDateString('en-US', {month:'numeric', day:'numeric'}),
+    mS: cur.mS,
+    eS: cur.eS,
+    w: window.lastW
+  };
+  masterHistory.push(gameRecord);
+  window.lastW === "Matt" ? life.mW++ : life.eW++;
+  cur = { mS: 0, eS: 0, mP: 1, eP: 1 };
+  update();
+}
+
+function fullReset() {
+  if(confirm("This will wipe all lifetime stats and game history! Proceed?")) {
+    life={mW:0,eW:0}; cur={mS:0,eS:0,mP:1,eP:1}; masterHistory=[]; update();
+  }
+}
 update();
 </script>
 </body>
