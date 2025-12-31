@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 10 Score Tracker</title>
+<link rel="apple-touch-icon" href="icon.png"> <!-- replace with your icon -->
+<style>
+  body { font-family: -apple-system, sans-serif; margin: 20px; }
+  h1 { text-align: center; }
+  .player { display: flex; align-items: center; margin-bottom: 10px; }
+  .player img { width: 60px; height: 60px; object-fit: cover; border-radius: 50%; margin-right: 10px; }
+  input[type=number] { width: 60px; }
+  button { margin: 5px 0; padding: 5px 10px; font-size: 1em; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { border: 1px solid #ccc; padding: 5px; text-align: center; vertical-align: middle; }
+  td img { width: 40px; height: 40px; object-fit: cover; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<h1>Phase 10 Score Tracker</h1>
+
+<div class="player">
+  <img id="photoMatt" src="" alt="Matt Photo">
+  <span>Matt:</span>
+  <input type="number" id="scoreMatt" min="0">
+  <input type="file" id="uploadMatt" accept="image/*">
+</div>
+
+<div class="player">
+  <img id="photoEmily" src="" alt="Emily Photo">
+  <span>Emily:</span>
+  <input type="number" id="scoreEmily" min="0">
+  <input type="file" id="uploadEmily" accept="image/*">
+</div>
+
+<button id="addGame">Add Game</button>
+<button id="resetData">Reset History</button>
+
+<h2>Statistics</h2>
+<p>Total Games: <span id="totalGames">0</span></p>
+<p>Matt Wins: <span id="mattWins">0</span> (<span id="mattPercent">0</span>%)</p>
+<p>Emily Wins: <span id="emilyWins">0</span> (<span id="emilyPercent">0</span>%)</p>
+
+<h2>Game History</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Matt</th>
+      <th>Emily</th>
+      <th>Winner</th>
+    </tr>
+  </thead>
+  <tbody id="historyTable">
+  </tbody>
+</table>
+
+<script>
+// Initialize data
+let games = JSON.parse(localStorage.getItem('phase10Games')) || [];
+let photos = JSON.parse(localStorage.getItem('phase10Photos')) || {Matt:'', Emily:''};
+
+// Update photos
+document.getElementById('photoMatt').src = photos.Matt || '';
+document.getElementById('photoEmily').src = photos.Emily || '';
+
+// Handle photo uploads
+function handlePhotoUpload(inputId, player) {
+  document.getElementById(inputId).addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      photos[player] = reader.result;
+      localStorage.setItem('phase10Photos', JSON.stringify(photos));
+      document.getElementById('photo' + player).src = reader.result;
+      updateTable(); // refresh table with updated photo
+    };
+    reader.readAsDataURL(file);
+  });
+}
+handlePhotoUpload('uploadMatt', 'Matt');
+handlePhotoUpload('uploadEmily', 'Emily');
+
+// Add game
+document.getElementById('addGame').addEventListener('click', () => {
+  const scoreMatt = parseInt(document.getElementById('scoreMatt').value) || 0;
+  const scoreEmily = parseInt(document.getElementById('scoreEmily').value) || 0;
+  if (scoreMatt === 0 && scoreEmily === 0) return alert('Enter scores first.');
+
+  const winner = scoreMatt > scoreEmily ? 'Matt' : (scoreEmily > scoreMatt ? 'Emily' : 'Tie');
+  const game = {date: new Date().toLocaleDateString(), scoreMatt, scoreEmily, winner};
+  games.push(game);
+  localStorage.setItem('phase10Games', JSON.stringify(games));
+  document.getElementById('scoreMatt').value = '';
+  document.getElementById('scoreEmily').value = '';
+  updateTable();
+});
+
+// Reset data
+document.getElementById('resetData').addEventListener('click', () => {
+  if (!confirm('Reset all scores and history?')) return;
+  games = [];
+  localStorage.removeItem('phase10Games');
+  updateTable();
+});
+
+// Update table and stats
+function updateTable() {
+  const tbody = document.getElementById('historyTable');
+  tbody.innerHTML = '';
+  let mattWins = 0, emilyWins = 0;
+  games.forEach(g => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${g.date}</td>
+      <td><img src="${photos.Matt}" alt="Matt"> ${g.scoreMatt}</td>
+      <td><img src="${photos.Emily}" alt="Emily"> ${g.scoreEmily}</td>
+      <td>${g.winner}</td>
+    `;
+    tbody.appendChild(tr);
+    if (g.winner === 'Matt') mattWins++;
+    if (g.winner === 'Emily') emilyWins++;
+  });
+  document.getElementById('totalGames').textContent = games.length;
+  document.getElementById('mattWins').textContent = mattWins;
+  document.getElementById('emilyWins').textContent = emilyWins;
+  document.getElementById('mattPercent').textContent = games.length ? ((mattWins / games.length)*100).toFixed(1) : 0;
+  document.getElementById('emilyPercent').textContent = games.length ? ((emilyWins / games.length)*100).toFixed(1) : 0;
+}
+updateTable();
+</script>
+
+</body>
+</html>
