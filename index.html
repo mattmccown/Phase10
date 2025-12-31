@@ -18,6 +18,7 @@
   button { padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
   .btn-phase { background-color: #007AFF; color: white; }
   .btn-add { background-color: #34C759; color: white; width: 100%; margin-top: 10px; font-size: 1.1rem; }
+  .btn-undo { background-color: #FF9500; color: white; width: 100%; margin-top: 8px; font-size: 0.9rem; }
   .history-section { margin-top: 20px; background: white; border-radius: 15px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
   table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 10px; }
   th { border-bottom: 2px solid #eee; padding: 8px; color: #888; text-align: center; }
@@ -54,23 +55,17 @@
 </div>
 
 <button class="btn-add" onclick="submitRound()">End Round / Add Points</button>
+<button class="btn-undo" onclick="undoLastRound()">Undo Last Entry</button>
 
 <div id="winnerBox" class="winner-section">
   <h2 id="winnerText" style="margin:0"></h2>
-  <button onclick="recordWin()" style="margin-top:10px; background: white; color: #34C759; border:none; padding:12px; border-radius:8px; font-weight:bold; width: 100%;">Save Game to History & Reset</button>
+  <button onclick="recordWin()" style="margin-top:10px; background: white; color: #34C759; border:none; padding:12px; border-radius:8px; font-weight:bold; width: 100%;">Save Game & Reset</button>
 </div>
 
 <div class="history-section">
-  <h3 style="margin:0; font-size: 1rem; color: #007AFF;">Master Game History</h3>
-  <table id="masterTable">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Matt</th>
-        <th>Emily</th>
-        <th>Win</th>
-      </tr>
-    </thead>
+  <h3 style="margin:0; font-size: 1rem; color: #007AFF;">Game History</h3>
+  <table>
+    <thead><tr><th>Date</th><th>M</th><th>E</th><th>W</th></tr></thead>
     <tbody id="masterHistoryBody"></tbody>
   </table>
 </div>
@@ -78,7 +73,7 @@
 <button class="btn-reset" onclick="fullReset()">Reset All Data</button>
 
 <script>
-let cur = JSON.parse(localStorage.getItem('p10C')) || { mS: 0, eS: 0, mP: 1, eP: 1 };
+let cur = JSON.parse(localStorage.getItem('p10C')) || { mS: 0, eS: 0, mP: 1, eP: 1, rounds: [] };
 let life = JSON.parse(localStorage.getItem('p10L')) || { mW: 0, eW: 0 };
 let masterHistory = JSON.parse(localStorage.getItem('p10History')) || [];
 
@@ -90,15 +85,9 @@ function update() {
   document.getElementById('lifeMatt').textContent = life.mW;
   document.getElementById('lifeEmily').textContent = life.eW;
 
-  // Master History Table
   const masterBody = document.getElementById('masterHistoryBody');
   masterBody.innerHTML = masterHistory.map(g => `
-    <tr>
-      <td>${g.date}</td>
-      <td>${g.mS}</td>
-      <td>${g.eS}</td>
-      <td style="font-weight:bold; color:#34C759">${g.w.charAt(0)}</td>
-    </tr>
+    <tr><td>${g.date}</td><td>${g.mS}</td><td>${g.eS}</td><td style="font-weight:bold; color:#34C759">${g.w.charAt(0)}</td></tr>
   `).reverse().join('');
 
   const winBox = document.getElementById('winnerBox');
@@ -117,28 +106,37 @@ function update() {
 function changePhase(p, a) { p==='Matt' ? cur.mP += a : cur.eP += a; update(); }
 
 function submitRound() {
-  cur.mS += parseInt(document.getElementById('inMatt').value) || 0;
-  cur.eS += parseInt(document.getElementById('inEmily').value) || 0;
+  const m = parseInt(document.getElementById('inMatt').value) || 0;
+  const e = parseInt(document.getElementById('inEmily').value) || 0;
+  cur.mS += m; cur.eS += e;
+  cur.rounds.push({m, e});
   document.getElementById('inMatt').value = ""; document.getElementById('inEmily').value = "";
   update();
+}
+
+function undoLastRound() {
+  if (cur.rounds.length > 0) {
+    let last = cur.rounds.pop();
+    cur.mS -= last.m;
+    cur.eS -= last.e;
+    update();
+  }
 }
 
 function recordWin() {
   const gameRecord = {
     date: new Date().toLocaleDateString('en-US', {month:'numeric', day:'numeric'}),
-    mS: cur.mS,
-    eS: cur.eS,
-    w: window.lastW
+    mS: cur.mS, eS: cur.eS, w: window.lastW
   };
   masterHistory.push(gameRecord);
   window.lastW === "Matt" ? life.mW++ : life.eW++;
-  cur = { mS: 0, eS: 0, mP: 1, eP: 1 };
+  cur = { mS: 0, eS: 0, mP: 1, eP: 1, rounds: [] };
   update();
 }
 
 function fullReset() {
-  if(confirm("This will wipe all lifetime stats and game history! Proceed?")) {
-    life={mW:0,eW:0}; cur={mS:0,eS:0,mP:1,eP:1}; masterHistory=[]; update();
+  if(confirm("Delete EVERYTHING?")) {
+    life={mW:0,eW:0}; cur={mS:0,eS:0,mP:1,eP:1,rounds:[]}; masterHistory=[]; update();
   }
 }
 update();
