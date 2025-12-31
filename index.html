@@ -18,11 +18,11 @@
   button { padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
   .btn-phase { background-color: #007AFF; color: white; }
   .btn-add { background-color: #34C759; color: white; width: 100%; margin-top: 10px; font-size: 1.1rem; }
-  .btn-undo { background-color: #FF9500; color: white; width: 100%; margin-top: 8px; font-size: 0.9rem; }
+  .btn-undo { background-color: #FF9500; color: white; width: 100%; margin-top: 8px; font-size: 0.8rem; }
   .history-section { margin-top: 20px; background: white; border-radius: 15px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 10px; }
-  th { border-bottom: 2px solid #eee; padding: 8px; color: #888; text-align: center; }
-  td { padding: 8px; text-align: center; border-bottom: 1px solid #f9f9f9; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 5px; }
+  th { border-bottom: 2px solid #eee; padding: 5px; color: #888; text-align: center; }
+  td { padding: 5px; text-align: center; border-bottom: 1px solid #f9f9f9; }
   .winner-section { text-align: center; background: #34C759; color: white; padding: 15px; border-radius: 15px; display: none; margin: 20px 0; }
   .btn-reset { background-color: #FF3B30; color: white; width: 100%; margin-top: 40px; font-size: 0.8rem; }
 </style>
@@ -63,7 +63,15 @@
 </div>
 
 <div class="history-section">
-  <h3 style="margin:0; font-size: 1rem; color: #007AFF;">Game History</h3>
+  <h3 style="margin:0; font-size: 0.9rem; color: #FF9500;">Current Game Rounds</h3>
+  <table>
+    <thead><tr><th>Rd</th><th>Matt</th><th>Emily</th></tr></thead>
+    <tbody id="currentRoundBody"></tbody>
+  </table>
+</div>
+
+<div class="history-section">
+  <h3 style="margin:0; font-size: 0.9rem; color: #007AFF;">Master History (Log)</h3>
   <table>
     <thead><tr><th>Date</th><th>M</th><th>E</th><th>W</th></tr></thead>
     <tbody id="masterHistoryBody"></tbody>
@@ -85,8 +93,13 @@ function update() {
   document.getElementById('lifeMatt').textContent = life.mW;
   document.getElementById('lifeEmily').textContent = life.eW;
 
-  const masterBody = document.getElementById('masterHistoryBody');
-  masterBody.innerHTML = masterHistory.map(g => `
+  // Render Current Rounds
+  document.getElementById('currentRoundBody').innerHTML = cur.rounds.map((r, i) => 
+    `<tr><td>${i+1}</td><td>+${r.m}</td><td>+${r.e}</td></tr>`
+  ).reverse().join('');
+
+  // Render Master History
+  document.getElementById('masterHistoryBody').innerHTML = masterHistory.map(g => `
     <tr><td>${g.date}</td><td>${g.mS}</td><td>${g.eS}</td><td style="font-weight:bold; color:#34C759">${g.w.charAt(0)}</td></tr>
   `).reverse().join('');
 
@@ -117,25 +130,23 @@ function submitRound() {
 function undoLastRound() {
   if (cur.rounds.length > 0) {
     let last = cur.rounds.pop();
-    cur.mS -= last.m;
-    cur.eS -= last.e;
+    cur.mS -= last.m; cur.eS -= last.e;
     update();
   }
 }
 
 function recordWin() {
-  const gameRecord = {
+  masterHistory.push({
     date: new Date().toLocaleDateString('en-US', {month:'numeric', day:'numeric'}),
     mS: cur.mS, eS: cur.eS, w: window.lastW
-  };
-  masterHistory.push(gameRecord);
+  });
   window.lastW === "Matt" ? life.mW++ : life.eW++;
   cur = { mS: 0, eS: 0, mP: 1, eP: 1, rounds: [] };
   update();
 }
 
 function fullReset() {
-  if(confirm("Delete EVERYTHING?")) {
+  if(confirm("Wipe everything?")) {
     life={mW:0,eW:0}; cur={mS:0,eS:0,mP:1,eP:1,rounds:[]}; masterHistory=[]; update();
   }
 }
