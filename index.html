@@ -1,28 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><link rel="apple-touch-icon" href="icon.png.WEBP">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phase 10 Pro Tracker</title>
+<title>Phase 10 Tracker</title>
+<link rel="apple-touch-icon" href="icon.png">
 <style>
   body { font-family: -apple-system, sans-serif; margin: 15px; background-color: #f0f2f5; color: #1c1e21; padding-bottom: 50px; }
-  h1 { text-align: center; color: #007AFF; margin-bottom: 10px; }
-  .lifetime-stats { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; font-weight: bold; background: #fff; padding: 10px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+  h1 { text-align: center; color: #007AFF; margin-bottom: 5px; }
+  .lifetime-stats { display: flex; justify-content: center; gap: 20px; margin-bottom: 15px; font-weight: bold; background: #fff; padding: 10px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
   .player-box { background: white; padding: 15px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
   .name-row { display: flex; justify-content: space-between; align-items: center; }
   .phase-display { background: #E7F3FF; color: #1877F2; padding: 4px 10px; border-radius: 15px; font-weight: bold; font-size: 0.85rem; }
   .score-total { font-size: 2.2rem; font-weight: 800; text-align: center; margin: 5px 0; }
   .input-group { display: flex; gap: 8px; margin-top: 10px; }
   input[type=text] { flex-grow: 1; padding: 12px; font-size: 1.1rem; border: 2px solid #ddd; border-radius: 10px; text-align: center; }
-  button { padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+  button { padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
   .btn-phase { background-color: #007AFF; color: white; }
   .btn-add { background-color: #34C759; color: white; width: 100%; margin-top: 10px; font-size: 1.1rem; }
+  .btn-ref { background-color: #8E8E93; color: white; width: 100%; margin-top: 10px; font-size: 0.9rem; }
   .history-section { margin-top: 20px; background: white; border-radius: 15px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
   table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
   th { border-bottom: 2px solid #eee; padding: 8px; color: #888; }
   td { padding: 8px; text-align: center; border-bottom: 1px solid #f9f9f9; }
+  #phaseList { display: none; background: #fff; padding: 15px; border-radius: 15px; margin-top: 10px; border: 1px solid #ddd; font-size: 0.85rem; line-height: 1.6; }
   .winner-section { text-align: center; background: #34C759; color: white; padding: 15px; border-radius: 15px; display: none; margin: 20px 0; }
-  .btn-reset { background-color: #FF3B30; color: white; width: 100%; margin-top: 30px; }
+  .btn-reset { background-color: #FF3B30; color: white; width: 100%; margin-top: 40px; font-size: 0.8rem; }
 </style>
 </head>
 <body>
@@ -35,121 +38,85 @@
 </div>
 
 <div class="player-box">
-  <div class="name-row">
-    <strong>MATT</strong>
-    <div class="phase-display">Phase <span id="pMatt">1</span></div>
-  </div>
+  <div class="name-row"><strong>MATT</strong><div class="phase-display">Phase <span id="pMatt">1</span></div></div>
   <div class="score-total" id="totalMatt">0</div>
   <div class="input-group">
     <input type="text" inputmode="numeric" id="inMatt" placeholder="Pts">
-    <button class="btn-phase" onclick="changePhase('Matt', 1)">Phase ↑</button>
+    <button class="btn-phase" onclick="changePhase('Matt', 1)">Phase Up ↑</button>
   </div>
 </div>
 
 <div class="player-box">
-  <div class="name-row">
-    <strong>EMILY</strong>
-    <div class="phase-display">Phase <span id="pEmily">1</span></div>
-  </div>
+  <div class="name-row"><strong>EMILY</strong><div class="phase-display">Phase <span id="pEmily">1</span></div></div>
   <div class="score-total" id="totalEmily">0</div>
   <div class="input-group">
     <input type="text" inputmode="numeric" id="inEmily" placeholder="Pts">
-    <button class="btn-phase" onclick="changePhase('Emily', 1)">Phase ↑</button>
+    <button class="btn-phase" onclick="changePhase('Emily', 1)">Phase Up ↑</button>
   </div>
 </div>
 
 <button class="btn-add" onclick="submitRound()">End Round / Add Points</button>
+<button class="btn-ref" onclick="toggleRef()">Show Phase Requirements</button>
+
+<div id="phaseList">
+  <strong>1:</strong> 2 sets of 3 | <strong>2:</strong> 1 set of 3 + 1 run of 4<br>
+  <strong>3:</strong> 1 set of 4 + 1 run of 4 | <strong>4:</strong> 1 run of 7<br>
+  <strong>5:</strong> 1 run of 8 | <strong>6:</strong> 1 run of 9<br>
+  <strong>7:</strong> 2 sets of 4 | <strong>8:</strong> 7 cards of 1 color<br>
+  <strong>9:</strong> 1 set of 5 + 1 set of 2 | <strong>10:</strong> 1 set of 5 + 1 set of 3
+</div>
 
 <div id="winnerBox" class="winner-section">
   <h2 id="winnerText" style="margin:0"></h2>
-  <button onclick="recordWin()" style="margin-top:10px; background: white; color: #34C759; border:none; padding:8px 15px; border-radius:8px; font-weight:bold;">Log Win & Reset Game</button>
+  <button onclick="recordWin()" style="margin-top:10px; background: white; color: #34C759; border:none; padding:10px; border-radius:8px; font-weight:bold;">Log Win & Reset Game</button>
 </div>
 
 <div class="history-section">
-  <h3 style="margin-top:0; font-size: 1rem; color: #555;">Round History</h3>
+  <h3 style="margin:0 0 10px 0; font-size: 1rem;">Round History</h3>
   <table>
     <thead><tr><th>Rd</th><th>Matt</th><th>Emily</th></tr></thead>
     <tbody id="historyTable"></tbody>
   </table>
 </div>
 
-<button class="btn-reset" onclick="fullReset()">Reset All (Including Records)</button>
+<button class="btn-reset" onclick="fullReset()">Reset Everything</button>
 
 <script>
-// Load Data
-let currentData = JSON.parse(localStorage.getItem('p10Current')) || { mScore: 0, eScore: 0, mPhase: 1, ePhase: 1, rounds: [] };
-let lifeRecords = JSON.parse(localStorage.getItem('p10Life')) || { mWins: 0, eWins: 0 };
+let cur = JSON.parse(localStorage.getItem('p10C')) || { mS: 0, eS: 0, mP: 1, eP: 1, r: [] };
+let life = JSON.parse(localStorage.getItem('p10L')) || { mW: 0, eW: 0 };
 
-function updateUI() {
-  // Update Scores/Phases
-  document.getElementById('totalMatt').textContent = currentData.mScore;
-  document.getElementById('totalEmily').textContent = currentData.eScore;
-  document.getElementById('pMatt').textContent = currentData.mPhase;
-  document.getElementById('pEmily').textContent = currentData.ePhase;
-  
-  // Update Lifetime
-  document.getElementById('lifeMatt').textContent = lifeRecords.mWins;
-  document.getElementById('lifeEmily').textContent = lifeRecords.eWins;
+function update() {
+  document.getElementById('totalMatt').textContent = cur.mS;
+  document.getElementById('totalEmily').textContent = cur.eS;
+  document.getElementById('pMatt').textContent = cur.mP;
+  document.getElementById('pEmily').textContent = cur.eP;
+  document.getElementById('lifeMatt').textContent = life.mW;
+  document.getElementById('lifeEmily').textContent = life.eW;
+  document.getElementById('historyTable').innerHTML = cur.r.map((r, i) => `<tr><td>${i+1}</td><td>+${r.m}</td><td>+${r.e}</td></tr>`).reverse().join('');
 
-  // Update Table
-  const tbody = document.getElementById('historyTable');
-  tbody.innerHTML = currentData.rounds.map((r, i) => 
-    `<tr><td>${i+1}</td><td>+${r.m}</td><td>+${r.e}</td></tr>`
-  ).reverse().join('');
-
-  // Check for Win
   const winBox = document.getElementById('winnerBox');
-  if (currentData.mPhase > 10 || currentData.ePhase > 10) {
+  if (cur.mP > 10 || cur.eP > 10) {
     winBox.style.display = 'block';
-    let winName = "";
-    if (currentData.mPhase > 10 && currentData.ePhase > 10) {
-      winName = currentData.mScore < currentData.eScore ? "Matt" : "Emily";
-    } else {
-      winName = currentData.mPhase > 10 ? "Matt" : "Emily";
-    }
-    document.getElementById('winnerText').textContent = winName + " Wins!";
-    window.lastWinner = winName; 
-  } else {
-    winBox.style.display = 'none';
-  }
-
-  localStorage.setItem('p10Current', JSON.stringify(currentData));
-  localStorage.setItem('p10Life', JSON.stringify(lifeRecords));
+    let win = (cur.mP > 10 && cur.eP > 10) ? (cur.mS < cur.eS ? "Matt" : "Emily") : (cur.mP > 10 ? "Matt" : "Emily");
+    document.getElementById('winnerText').textContent = win + " Wins!";
+    window.lastW = win;
+  } else { winBox.style.display = 'none'; }
+  localStorage.setItem('p10C', JSON.stringify(cur));
+  localStorage.setItem('p10L', JSON.stringify(life));
 }
 
-function changePhase(player, amt) {
-  if (player === 'Matt') currentData.mPhase = Math.max(1, currentData.mPhase + amt);
-  else currentData.ePhase = Math.max(1, currentData.ePhase + amt);
-  updateUI();
-}
-
+function changePhase(p, a) { p==='Matt' ? cur.mP += a : cur.eP += a; update(); }
+function toggleRef() { const d = document.getElementById('phaseList').style; d.display = d.display === 'block' ? 'none' : 'block'; }
 function submitRound() {
   const m = parseInt(document.getElementById('inMatt').value) || 0;
   const e = parseInt(document.getElementById('inEmily').value) || 0;
-  currentData.mScore += m;
-  currentData.eScore += e;
-  currentData.rounds.push({m, e});
-  document.getElementById('inMatt').value = "";
-  document.getElementById('inEmily').value = "";
-  updateUI();
+  cur.mS += m; cur.eS += e; cur.r.push({m, e});
+  document.getElementById('inMatt').value = ""; document.getElementById('inEmily').value = "";
+  update();
 }
-
-function recordWin() {
-  if (window.lastWinner === "Matt") lifeRecords.mWins++;
-  if (window.lastWinner === "Emily") lifeRecords.eWins++;
-  currentData = { mScore: 0, eScore: 0, mPhase: 1, ePhase: 1, rounds: [] };
-  updateUI();
-}
-
-function fullReset() {
-  if(confirm("Delete ALL history and lifetime records?")) {
-    lifeRecords = { mWins: 0, eWins: 0 };
-    currentData = { mScore: 0, eScore: 0, mPhase: 1, ePhase: 1, rounds: [] };
-    updateUI();
-  }
-}
-
-updateUI();
+function recordWin() { window.lastW === "Matt" ? life.mW++ : life.eW++; cur = { mS: 0, eS: 0, mP: 1, eP: 1, r: [] }; update(); }
+function fullReset() { if(confirm("Clear records?")) { life={mW:0,eW:0}; cur={mS:0,eS:0,mP:1,eP:1,r:[]}; update(); } }
+update();
 </script>
 </body>
 </html>
