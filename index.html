@@ -3,26 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phase 10 Pro Tracker</title>
+<title>Phase 10 Multi-Tracker</title>
 <link rel="apple-touch-icon" href="icon.png">
 <style>
   body { font-family: -apple-system, sans-serif; margin: 15px; background-color: #f0f2f5; color: #1c1e21; padding-bottom: 50px; }
   h1 { text-align: center; color: #007AFF; margin-bottom: 5px; }
-  .lifetime-stats { display: flex; justify-content: center; gap: 20px; margin-bottom: 15px; font-weight: bold; background: #fff; padding: 10px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-  .player-box { background: white; padding: 15px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+  
+  .player-box { background: white; padding: 15px; border-radius: 15px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
   .name-row { display: flex; justify-content: space-between; align-items: center; }
   .phase-display { background: #E7F3FF; color: #1877F2; padding: 4px 10px; border-radius: 15px; font-weight: bold; font-size: 0.85rem; }
-  .score-total { font-size: 2.2rem; font-weight: 800; text-align: center; margin: 5px 0; }
+  .score-total { font-size: 2rem; font-weight: 800; text-align: center; margin: 5px 0; }
   .input-group { display: flex; gap: 8px; margin-top: 10px; }
-  input[type=text] { flex-grow: 1; padding: 12px; font-size: 1.1rem; border: 2px solid #ddd; border-radius: 10px; text-align: center; }
+  input[type=text] { flex-grow: 1; padding: 10px; font-size: 1.1rem; border: 2px solid #ddd; border-radius: 10px; text-align: center; }
+  
   button { padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-  .btn-phase { background-color: #007AFF; color: white; }
-  .btn-add { background-color: #34C759; color: white; width: 100%; margin-top: 10px; font-size: 1.1rem; }
+  .btn-phase-up { background-color: #007AFF; color: white; flex-grow: 2; }
+  .btn-phase-down { background-color: #8E8E93; color: white; padding: 12px 15px; }
+  .btn-add-round { background-color: #34C759; color: white; width: 100%; margin-top: 10px; font-size: 1.1rem; }
   .btn-undo { background-color: #FF9500; color: white; width: 100%; margin-top: 8px; font-size: 0.8rem; }
-  .history-section { margin-top: 20px; background: white; border-radius: 15px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 5px; }
-  th { border-bottom: 2px solid #eee; padding: 5px; color: #888; text-align: center; }
-  td { padding: 5px; text-align: center; border-bottom: 1px solid #f9f9f9; }
+  
+  details { background: white; border-radius: 12px; margin-top: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+  summary { padding: 12px; font-weight: bold; font-size: 0.9rem; color: #555; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  summary::after { content: '▼'; font-size: 0.7rem; color: #888; }
+  details[open] summary::after { content: '▲'; }
+  .collapsible-content { padding: 0 12px 12px 12px; border-top: 1px solid #f0f2f5; }
+  
+  .player-pill { display: inline-flex; align-items: center; background: #eee; padding: 5px 10px; border-radius: 20px; margin: 5px; font-size: 0.8rem; }
+  .remove-p { color: red; margin-left: 8px; font-weight: bold; }
+  
+  table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+  th, td { padding: 8px; text-align: center; border-bottom: 1px solid #f9f9f9; }
   .winner-section { text-align: center; background: #34C759; color: white; padding: 15px; border-radius: 15px; display: none; margin: 20px 0; }
   .btn-reset { background-color: #FF3B30; color: white; width: 100%; margin-top: 40px; font-size: 0.8rem; }
 </style>
@@ -31,30 +41,20 @@
 
 <h1>Phase 10 Tracker</h1>
 
-<div class="lifetime-stats">
-  <span>🏆 Matt: <span id="lifeMatt">0</span></span>
-  <span>🏆 Emily: <span id="lifeEmily">0</span></span>
-</div>
-
-<div class="player-box">
-  <div class="name-row"><strong>MATT</strong><div class="phase-display">Phase <span id="pMatt">1</span></div></div>
-  <div class="score-total" id="totalMatt">0</div>
-  <div class="input-group">
-    <input type="text" inputmode="numeric" id="inMatt" placeholder="Pts">
-    <button class="btn-phase" onclick="changePhase('Matt', 1)">Phase Up ↑</button>
+<details>
+  <summary>Manage Players & Lifetime</summary>
+  <div class="collapsible-content">
+    <div id="playerPills"></div>
+    <div class="input-group">
+      <input type="text" id="newPlayerName" placeholder="New Player Name">
+      <button class="btn-phase-up" onclick="addPlayer()">Add</button>
+    </div>
   </div>
-</div>
+</details>
 
-<div class="player-box">
-  <div class="name-row"><strong>EMILY</strong><div class="phase-display">Phase <span id="pEmily">1</span></div></div>
-  <div class="score-total" id="totalEmily">0</div>
-  <div class="input-group">
-    <input type="text" inputmode="numeric" id="inEmily" placeholder="Pts">
-    <button class="btn-phase" onclick="changePhase('Emily', 1)">Phase Up ↑</button>
-  </div>
-</div>
+<div id="gameBoard"></div>
 
-<button class="btn-add" onclick="submitRound()">End Round / Add Points</button>
+<button class="btn-add-round" onclick="submitRound()">End Round / Add Points</button>
 <button class="btn-undo" onclick="undoLastRound()">Undo Last Entry</button>
 
 <div id="winnerBox" class="winner-section">
@@ -62,94 +62,151 @@
   <button onclick="recordWin()" style="margin-top:10px; background: white; color: #34C759; border:none; padding:12px; border-radius:8px; font-weight:bold; width: 100%;">Save Game & Reset</button>
 </div>
 
-<div class="history-section">
-  <h3 style="margin:0; font-size: 0.9rem; color: #FF9500;">Current Game Rounds</h3>
-  <table>
-    <thead><tr><th>Rd</th><th>Matt</th><th>Emily</th></tr></thead>
-    <tbody id="currentRoundBody"></tbody>
-  </table>
-</div>
+<details>
+  <summary>Phase Requirements</summary>
+  <div class="collapsible-content" style="font-size: 0.8rem;">
+    1: 2 sets of 3 | 2: 1 set of 3+1 run of 4 | 3: 1 set of 4+1 run of 4 | 4: 1 run of 7 | 5: 1 run of 8 | 6: 1 run of 9 | 7: 2 sets of 4 | 8: 7 of 1 color | 9: 1 set of 5+1 set of 2 | 10: 1 set of 5+1 set of 3
+  </div>
+</details>
 
-<div class="history-section">
-  <h3 style="margin:0; font-size: 0.9rem; color: #007AFF;">Master History (Log)</h3>
-  <table>
-    <thead><tr><th>Date</th><th>M</th><th>E</th><th>W</th></tr></thead>
-    <tbody id="masterHistoryBody"></tbody>
-  </table>
-</div>
+<details open>
+  <summary>Current Game History</summary>
+  <div class="collapsible-content" id="roundHistory"></div>
+</details>
 
-<button class="btn-reset" onclick="fullReset()">Reset All Data</button>
+<details>
+  <summary>Master Game Log</summary>
+  <div class="collapsible-content">
+    <table id="masterTable">
+      <thead><tr><th>Date</th><th>Players/Scores</th><th>Win</th></tr></thead>
+      <tbody id="masterBody"></tbody>
+    </table>
+  </div>
+</details>
+
+<button class="btn-reset" onclick="fullReset()">Wipe Everything</button>
 
 <script>
-let cur = JSON.parse(localStorage.getItem('p10C')) || { mS: 0, eS: 0, mP: 1, eP: 1, rounds: [] };
-let life = JSON.parse(localStorage.getItem('p10L')) || { mW: 0, eW: 0 };
-let masterHistory = JSON.parse(localStorage.getItem('p10History')) || [];
+let state = JSON.parse(localStorage.getItem('p10Multi')) || {
+  players: [
+    { name: 'Matt', score: 0, phase: 1, wins: 0 },
+    { name: 'Emily', score: 0, phase: 1, wins: 0 }
+  ],
+  rounds: [],
+  history: []
+};
 
 function update() {
-  document.getElementById('totalMatt').textContent = cur.mS;
-  document.getElementById('totalEmily').textContent = cur.eS;
-  document.getElementById('pMatt').textContent = cur.mP;
-  document.getElementById('pEmily').textContent = cur.eP;
-  document.getElementById('lifeMatt').textContent = life.mW;
-  document.getElementById('lifeEmily').textContent = life.eW;
+  const board = document.getElementById('gameBoard');
+  const pills = document.getElementById('playerPills');
+  board.innerHTML = '';
+  pills.innerHTML = '';
 
-  // Render Current Rounds
-  document.getElementById('currentRoundBody').innerHTML = cur.rounds.map((r, i) => 
-    `<tr><td>${i+1}</td><td>+${r.m}</td><td>+${r.e}</td></tr>`
-  ).reverse().join('');
+  state.players.forEach((p, idx) => {
+    // Build Game Board
+    board.innerHTML += `
+      <div class="player-box">
+        <div class="name-row">
+          <strong>${p.name} <small>(🏆${p.wins})</small></strong>
+          <div class="phase-display">Phase <span>${p.phase}</span></div>
+        </div>
+        <div class="score-total">${p.score}</div>
+        <div class="input-group">
+          <input type="text" inputmode="numeric" id="input-${idx}" placeholder="Pts">
+          <button class="btn-phase-up" onclick="changePhase(${idx}, 1)">↑</button>
+          <button class="btn-phase-down" onclick="changePhase(${idx}, -1)">↓</button>
+        </div>
+      </div>`;
+    
+    // Build Management Pills
+    pills.innerHTML += `
+      <span class="player-pill">
+        ${p.name} (Wins: ${p.wins}) 
+        <span class="remove-p" onclick="removePlayer(${idx})">✕</span>
+      </span>`;
+  });
 
-  // Render Master History
-  document.getElementById('masterHistoryBody').innerHTML = masterHistory.map(g => `
-    <tr><td>${g.date}</td><td>${g.mS}</td><td>${g.eS}</td><td style="font-weight:bold; color:#34C759">${g.w.charAt(0)}</td></tr>
-  `).reverse().join('');
+  // Current History Table
+  let hHTML = '<table><thead><tr><th>Rd</th>' + state.players.map(p => `<th>${p.name.charAt(0)}</th>`).join('') + '</tr></thead><tbody>';
+  state.rounds.slice().reverse().forEach((r, i) => {
+    hHTML += `<tr><td>${state.rounds.length - i}</td>` + r.map(pts => `<td>+${pts}</td>`).join('') + '</tr>';
+  });
+  document.getElementById('roundHistory').innerHTML = hHTML + '</tbody></table>';
 
+  // Master Log
+  document.getElementById('masterBody').innerHTML = state.history.slice().reverse().map(h => `
+    <tr><td>${h.date}</td><td>${h.summary}</td><td>${h.winner}</td></tr>
+  `).join('');
+
+  // Win Logic
   const winBox = document.getElementById('winnerBox');
-  if (cur.mP > 10 || cur.eP > 10) {
+  const finishers = state.players.filter(p => p.phase > 10);
+  if (finishers.length > 0) {
     winBox.style.display = 'block';
-    let win = (cur.mP > 10 && cur.eP > 10) ? (cur.mS < cur.eS ? "Matt" : "Emily") : (cur.mP > 10 ? "Matt" : "Emily");
-    document.getElementById('winnerText').textContent = win + " Wins!";
-    window.lastW = win;
+    let winner = finishers.sort((a,b) => a.score - b.score)[0];
+    document.getElementById('winnerText').textContent = winner.name + " Wins!";
+    window.lastWinnerIdx = state.players.indexOf(winner);
   } else { winBox.style.display = 'none'; }
 
-  localStorage.setItem('p10C', JSON.stringify(cur));
-  localStorage.setItem('p10L', JSON.stringify(life));
-  localStorage.setItem('p10History', JSON.stringify(masterHistory));
+  localStorage.setItem('p10Multi', JSON.stringify(state));
 }
 
-function changePhase(p, a) { p==='Matt' ? cur.mP += a : cur.eP += a; update(); }
+function addPlayer() {
+  const name = document.getElementById('newPlayerName').value;
+  if (name) {
+    state.players.push({ name, score: 0, phase: 1, wins: 0 });
+    document.getElementById('newPlayerName').value = '';
+    update();
+  }
+}
+
+function removePlayer(idx) {
+  if (confirm("Remove " + state.players[idx].name + "?")) {
+    state.players.splice(idx, 1);
+    update();
+  }
+}
+
+function changePhase(idx, amt) {
+  state.players[idx].phase = Math.max(1, state.players[idx].phase + amt);
+  update();
+}
 
 function submitRound() {
-  const m = parseInt(document.getElementById('inMatt').value) || 0;
-  const e = parseInt(document.getElementById('inEmily').value) || 0;
-  cur.mS += m; cur.eS += e;
-  cur.rounds.push({m, e});
-  document.getElementById('inMatt').value = ""; document.getElementById('inEmily').value = "";
+  let roundPts = [];
+  state.players.forEach((p, i) => {
+    let pts = parseInt(document.getElementById(`input-${i}`).value) || 0;
+    p.score += pts;
+    roundPts.push(pts);
+    document.getElementById(`input-${i}`).value = '';
+  });
+  state.rounds.push(roundPts);
   update();
 }
 
 function undoLastRound() {
-  if (cur.rounds.length > 0) {
-    let last = cur.rounds.pop();
-    cur.mS -= last.m; cur.eS -= last.e;
+  if (state.rounds.length > 0) {
+    let last = state.rounds.pop();
+    state.players.forEach((p, i) => p.score -= last[i]);
     update();
   }
 }
 
 function recordWin() {
-  masterHistory.push({
+  let summary = state.players.map(p => `${p.name.charAt(0)}:${p.score}`).join(' ');
+  state.history.push({
     date: new Date().toLocaleDateString('en-US', {month:'numeric', day:'numeric'}),
-    mS: cur.mS, eS: cur.eS, w: window.lastW
+    summary: summary,
+    winner: state.players[window.lastWinnerIdx].name.charAt(0)
   });
-  window.lastW === "Matt" ? life.mW++ : life.eW++;
-  cur = { mS: 0, eS: 0, mP: 1, eP: 1, rounds: [] };
+  state.players[window.lastWinnerIdx].wins++;
+  state.players.forEach(p => { p.score = 0; p.phase = 1; });
+  state.rounds = [];
   update();
 }
 
-function fullReset() {
-  if(confirm("Wipe everything?")) {
-    life={mW:0,eW:0}; cur={mS:0,eS:0,mP:1,eP:1,rounds:[]}; masterHistory=[]; update();
-  }
-}
+function fullReset() { if(confirm("Wipe all players, wins, and history?")) { localStorage.clear(); location.reload(); } }
+
 update();
 </script>
 </body>
